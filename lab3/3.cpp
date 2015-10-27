@@ -1,6 +1,12 @@
 #include "sdt.h"
-int last_error = 0;
-int get_last_error()
+enum Error {     //перечисление для ошибок
+	NoError,    //Нет ошибок
+	ErrTemp,   //Ошибка в значении температуры (< 0K)
+	ErrScale   // Неизвестная шкала from или to
+};
+
+Error last_error = NoError;
+Error get_last_error()
 {
     return last_error;
 }
@@ -9,34 +15,28 @@ double convert(double t, char from, char to)
     if (to==from) return t;
     switch (from)
     {
-    case 'k': K=t;
-              break;
-    case 'K': K=t;
-              break;
-    case 'C': K=t+273.15;
-              break;
-    case 'c': K=t+273.15;
-              break;
-    case 'F': K=(5*(t-32))/9+273.15;
-              break;
-    case 'f': K=(5*(t-32))/9+273.15;
-              break;
-    default: last_error=1;
+    case 'k':
+    case 'K': K=t; last_error=NoError; break;
+    case 'C':
+    case 'c': K=t+273.15; last_error=NoError; break;
+    case 'F':
+    case 'f': K=(5*(t-32))/9+273.15; last_error=NoError; break;
+    default: last_error=ErrScale;
     }
-    if (K<0) last_error=2;
+    if (K<0) last_error=ErrTemp;
 
     if (K>=0)
     {  switch (to)
       {
-        case 'C': return (K-273.15); break;
-        case 'c': return (K-273.15); break;
+        case 'C':
+        case 'c': return (K-273.15); last_error=NoError; break;
 
-        case 'F': return ((9*(K-273.15))/5+32); break;
-        case 'f': return ((9*(K-273.15))/5+32); break;
+        case 'F':
+        case 'f': return ((9*(K-273.15))/5+32); last_error=NoError; break;
 
-        case 'K': return K; break;
-        case 'k': return K; break;
-        default: last_error=1;
+        case 'K':
+        case 'k': return K; last_error=NoError; break;
+        default: last_error=ErrScale ;
       }
     }
 }
@@ -53,16 +53,15 @@ int main()
         F=convert(t,s,'F');
         K=convert(t,s,'K');
      switch (get_last_error())
-        { case 1: cerr <<"Incorrect nomination of scale! Try again! \n";
+        { case ErrScale: cerr <<"Incorrect nomination of scale! Try again! \n";
                   break;
-          case 2: cerr <<"Too low temperature!\n";
+          case ErrTemp: cerr <<"Too low temperature!\n";
                   break;
           default:
             temp.push_back(C);
             temp.push_back(K);
             temp.push_back(F);
         }
-      last_error = 0;
       cout << "Input the temperature: 10F-Fahrenheit,10C-Celsius,10K-Kelvin: ";
     }
     cout <<"C \t" <<"K \t" <<"F \t \n";
