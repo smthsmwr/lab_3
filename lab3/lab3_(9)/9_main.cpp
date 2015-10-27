@@ -18,13 +18,9 @@ int main()
 			{
 				cerr << e.what() << "\n";
 			}
-     catch (const logic_error& le)
+     catch (const logic_error& e)
 			{
-				cerr << le.what() << "\n";
-			}
-    catch (const invalid_argument& le)
-			{
-				cerr << le.what() << "\n";
+				cerr << e.what() << "\n";
 			}
      catch (...)
 			{
